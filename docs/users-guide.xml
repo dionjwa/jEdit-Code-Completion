@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<book xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation='http://www.docbook.org/xsd/4.4/docbook.xsd' >
+<!-- :wrap=soft:maxLineLen=0: -->
+<title>Completion Plugin Guide</title>
+<bookinfo>
+ <authorgroup>
+  <author><firstname>Dion</firstname><surname>Amago</surname></author>
+ </authorgroup>
+
+ <legalnotice><title>Legal Notice</title>
+  <para>
+   Permission is granted to copy, distribute and/or modify this document
+   under the terms of the GNU Free Documentation License, Version 1.1 or
+   any later version published by the Free Software Foundation; with no
+   <quote>Invariant Sections</quote>, <quote>Front-Cover Texts</quote> or
+   <quote>Back-Cover Texts</quote>, each as defined in the license. A copy of
+   the license can be found in the file <filename>COPYING.DOC.txt</filename>
+   included with jEdit.
+  </para>
+
+ </legalnotice>
+ </bookinfo>
+
+ <chapter id="intro">
+  <title> Introduction </title>
+
+ 
+<appendix id="changelog">
+ <title> Changelog </title>
+  <para> For a list of changes in this plugin, see the
+  <ulink url="docs/CHANGES.txt">change log</ulink>.
+  </para>
+</appendix>
+
+
+</book>
