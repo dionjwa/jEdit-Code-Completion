@@ -1,4 +1,14 @@
 <?xml version="1.0"?>
 <!DOCTYPE ACTIONS SYSTEM "actions.dtd">
 <ACTIONS>
+        <ACTION NAME="completion-complete">
+                <CODE>
+                completion.CompletionActions.completeFromCommand(view);
+		</CODE>
+        </ACTION>
+        <ACTION NAME="completion-insertion">
+                <CODE>
+                completion.CompletionActions.insert(view);
+		</CODE>
+        </ACTION>
 </ACTIONS>
