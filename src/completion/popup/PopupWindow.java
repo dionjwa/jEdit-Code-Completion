@@ -30,9 +30,8 @@ import org.gjt.sp.jedit.textarea.JEditTextArea;
 import completion.CompletionActions;
 import completion.service.CompletionCandidate;
 
-public class Popup2 extends JWindow
+public class PopupWindow extends JWindow
 {
-
     public int threadsRemaining;
     public boolean canHandleBackspace;
     protected final View view;
@@ -50,7 +49,7 @@ public class Popup2 extends JWindow
      * this popup untill end of completion.
      * @since jEdit 4.3pre13
      */
-    public Popup2(View view)
+    public PopupWindow(View view)
     {
         super(view);
         this.view = view;
@@ -78,7 +77,7 @@ public class Popup2 extends JWindow
         canHandleBackspace = true;
     }
 
-    public Popup2(View view, Point location)
+    public PopupWindow(View view, Point location)
     {
         this(view);
         if (location != null)
@@ -444,7 +443,7 @@ public class Popup2 extends JWindow
         @Override
         public void keyPressed(KeyEvent e)
         {
-            Popup2.this.keyPressed(e);
+            PopupWindow.this.keyPressed(e);
 
             if (validCandidates == null || validCandidates.size() == 0)
             {
@@ -506,7 +505,7 @@ public class Popup2 extends JWindow
         @Override
         public void keyTyped(KeyEvent e)
         {
-            Popup2.this.keyTyped(e);
+            PopupWindow.this.keyTyped(e);
 
             if (validCandidates == null || validCandidates.size() == 0)
             {

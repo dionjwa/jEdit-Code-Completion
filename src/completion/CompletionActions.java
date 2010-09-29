@@ -23,7 +23,7 @@ import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.textarea.JEditTextArea;
 
-import completion.popup.Popup2;
+import completion.popup.PopupWindow;
 import completion.service.CompletionCandidate;
 import completion.service.CompletionProvider;
 
@@ -47,7 +47,7 @@ public class CompletionActions
     private static WeakReference<JEditTextArea> delayedCompletionTarget;
     private static int caretWhenCompleteKeyPressed;
 //    private static SideKickCompletionPopup popup;
-    public static Popup2 popup;
+    public static PopupWindow popup;
 
     /**
      * Returns if completion popups should be shown after any period of
@@ -159,7 +159,7 @@ public class CompletionActions
             popup.dispose();
         }
 
-        popup = new Popup2(view);//, completionMode, autoCompletePopupGetFocus || completionMode == CompletionMode.COMPLETE_COMMAND, completeInstant);
+        popup = new PopupWindow(view);//, completionMode, autoCompletePopupGetFocus || completionMode == CompletionMode.COMPLETE_COMMAND, completeInstant);
         popup.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
@@ -252,7 +252,7 @@ public class CompletionActions
 //            popup.dispose();
 //        }
 //
-//        popup = new Popup(view, fromKeyStroke);
+//        popup = new PopupWindow(view, fromKeyStroke);
 //
 //        trace("complete, CompletionPlugin.serviceNames=" + Arrays.toString(ServiceManager.getServiceNames(CompletionProvider.class)));
 //
@@ -287,10 +287,10 @@ public class CompletionActions
     private static class CompletionSwingWorker extends SwingWorker<List<CompletionCandidate>, Object>
     {
         private CompletionProvider provider;
-        private Popup2 popup;
+        private PopupWindow popup;
         private View view;
 
-        public CompletionSwingWorker(CompletionProvider provider, Popup2 popup, View view)
+        public CompletionSwingWorker(CompletionProvider provider, PopupWindow popup, View view)
         {
             this.provider = provider;
             this.popup = popup;
