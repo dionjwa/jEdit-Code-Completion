@@ -22,6 +22,7 @@ import org.gjt.sp.jedit.ServiceManager;
 import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.textarea.JEditTextArea;
+import org.gjt.sp.jedit.textarea.TextArea;
 
 import completion.popup.PopupWindow;
 import completion.service.CompletionCandidate;
@@ -42,12 +43,27 @@ public class CompletionActions
 
 
     private static boolean completeDelay;
-    private static boolean completeInstant;
+    public static boolean completeInstant;
     private static int delay;
     private static WeakReference<JEditTextArea> delayedCompletionTarget;
     private static int caretWhenCompleteKeyPressed;
 //    private static SideKickCompletionPopup popup;
     public static PopupWindow popup;
+
+    public static String getCompletionPrefix (View view, String startChar)
+    {
+        TextArea textArea = view.getTextArea();
+        int caret = textArea.getCaretPosition() - 1;
+        int lineStart = textArea.getLineStartOffset(textArea.getLineOfOffset(textArea.getCaretPosition()));
+        while (!(textArea.getText(caret, 1).equals(startChar) || caret <= lineStart)) {
+            caret--;
+        }
+        int prefixLength = textArea.getCaretPosition() - (caret + 1);
+        if (prefixLength > 0) {
+            return textArea.getText(caret + 1, prefixLength);
+        }
+        return "";
+    }
 
     /**
      * Returns if completion popups should be shown after any period of
@@ -177,8 +193,8 @@ public class CompletionActions
             Collection<Mode> modes = provider.restrictToModes();
             if (modes == null || modes.contains(mode)) {
                 CompletionSwingWorker worker = new CompletionSwingWorker(provider, popup, view);
-                worker.execute();
                 popup.threadsRemaining++;
+                worker.execute();
             }
         }
 
@@ -318,6 +334,7 @@ public class CompletionActions
         @Override
         protected void done ()
         {
+            trace("DONE");
 //            popup.threadsRemaining--;
             try {
                 trace("CompletionPlugin.currentPopup == popup=" + (CompletionActions.popup== popup));

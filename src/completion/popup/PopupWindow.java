@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.AbstractListModel;
@@ -32,6 +33,10 @@ import completion.service.CompletionCandidate;
 
 public class PopupWindow extends JWindow
 {
+    /**
+     * Each completion service launches in a new thread, so if there are no completions we need
+     * to know if that's simply due to a completion service thread not yet arrived.
+     */
     public int threadsRemaining;
     public boolean canHandleBackspace;
     protected final View view;
@@ -39,8 +44,6 @@ public class PopupWindow extends JWindow
     protected List<CompletionCandidate> candidates;
     protected List<CompletionCandidate> validCandidates;
     protected final JList list;
-    protected boolean isActive;
-
 
     /**
      * Create a completion popup.
@@ -72,9 +75,12 @@ public class PopupWindow extends JWindow
         setContentPane(content);
         addWindowFocusListener(new WindowFocusHandler());
 
-        isActive = false;
-
         canHandleBackspace = true;
+
+        candidates = new ArrayList<CompletionCandidate>();
+        validCandidates = new ArrayList<CompletionCandidate>();
+
+        setLocation(getLocation(view.getTextArea(), view.getTextArea().getCaretPosition(), CompletionActions.getCompletionPrefix(view, ".")));
     }
 
     public PopupWindow(View view, Point location)
@@ -123,23 +129,29 @@ public class PopupWindow extends JWindow
      * Some completions may not be provided instantly.  Add them when they arrive.
      * @param candidates
      */
-    public void addCompletions (List<CompletionCandidate> candidates)
+    public void addCompletions (List<CompletionCandidate> newCandidates)
     {
-        this.candidates.addAll(candidates);
+        if (newCandidates != null) {
+            candidates.addAll(newCandidates);
+        }
         threadsRemaining--;
-        reset(isActive);
+        reset();
     }
 
     /**
      * Start completion.
-     * @param active Set focus to the popup
+     * @param nowActive Set focus to the popup
      */
-    public void reset (boolean active)
+    public void reset (boolean nowActive)
     {
         checkForValidCandidates();
-        if(threadsRemaining == 0 && (validCandidates == null || candidates.size() <= 0))
+        if(threadsRemaining == 0 && validCandidates.isEmpty())
         {
             dispose();
+            return;
+        }
+
+        if (threadsRemaining == 0 && validCandidates.size() == 1 && CompletionActions.completeInstant && doSelectedCompletion()) {
             return;
         }
 
@@ -148,9 +160,8 @@ public class PopupWindow extends JWindow
         pack();
         setLocation(fitInScreen(getLocation(null),this,
             view.getTextArea().getPainter().getFontMetrics().getHeight()));
-        if (active)
+        if (nowActive)
         {
-            isActive = true;
             setSelectedIndex(0);
             GUIUtilities.requestFocus(this,list);
         }
@@ -160,15 +171,7 @@ public class PopupWindow extends JWindow
 
     public void reset ()
     {
-        reset(isActive);
-    }
-
-    /**
-     * Current candidates of completion.
-     */
-    public List<CompletionCandidate> getCandidates()
-    {
-        return candidates;
+        reset(false);
     }
 
     /**
@@ -185,7 +188,7 @@ public class PopupWindow extends JWindow
      */
     public void setSelectedIndex(int index)
     {
-        if (validCandidates != null && 0 <= index && index < validCandidates.size())
+        if (0 <= index && index < validCandidates.size())
         {
             list.setSelectedIndex(index);
             list.ensureIndexIsVisible(index);
@@ -203,137 +206,106 @@ public class PopupWindow extends JWindow
     public boolean doSelectedCompletion()
     {
         int selected = list.getSelectedIndex();
-        if (validCandidates != null && 0 <= selected && selected < validCandidates.size())
+        if (validCandidates.size() == 1) {
+            selected = 0;
+        }
+        if (0 <= selected && selected < validCandidates.size())
         {
-            validCandidates.get(selected).complete(getCompletionPrefix(view.getTextArea()), view);
+            validCandidates.get(selected).complete(view);
             dispose();
             return true;
         }
         return false;
     }
 
-
-    public void keyTyped(KeyEvent evt)
+    protected void keyPressed(KeyEvent evt)
     {
-        char ch = evt.getKeyChar();
-        if(ch == '\b' && !canHandleBackspace)
-        {
-            evt.consume();
+        handleControlKeys(evt);
+        if (evt.isConsumed()) {
             return;
         }
 
-        keyTyped(ch);
-
-        evt.consume();
-    }
-
-    protected void keyTyped(char ch)
-    {
-        // If no completion is selected, do not pass the key to
-        // handleKeystroke() method. This avoids interfering
-        // between a bit intermittent user typing and automatic
-        // completion (which is not selected initially).
-        int selected = getSelectedIndex();
-        if(selected == -1)
-        {
-            view.getTextArea().userInput(ch);
-            updateCompletion(false);
-        }
-        else if(handleKeystroke(selected, ch))
-        {
-            updateCompletion(true);
-        }
-        else {
+        char keyChar = evt.getKeyChar();
+        int selectedIndex = getSelectedIndex();
+        //If the popup isn't selected, pass the keystroke to the buffer
+        if(selectedIndex == -1) {
+            if (CompletionActions.acceptChars.indexOf(keyChar) > -1 && validCandidates.size() == 1) {
+                validCandidates.get(0).complete(view);
+                dispose();
+            } else {
+                view.getTextArea().userInput(keyChar);
+                reset();
+            }
+        } else if (CompletionActions.acceptChars.indexOf(keyChar) > -1) {
+            validCandidates.get(selectedIndex).complete(view);
             dispose();
+        } else {
+            view.getTextArea().userInput(keyChar);
+            reset();
         }
     }
 
-
-    protected void keyPressed(KeyEvent evt)
+    protected boolean handleControlKeys(KeyEvent evt)
     {
-        // These code should be reduced to make this popup behave
-        // like a builtin popup. But these are here to keep
-        // compatibility with the old implementation before
-        // refactoring out of CompletionPopup.
         switch(evt.getKeyCode())
         {
-            case KeyEvent.VK_ENTER:
-                keyTyped('\n');
-                evt.consume();
-                break;
             case KeyEvent.VK_TAB:
-                keyTyped('\t');
-                evt.consume();
+            case KeyEvent.VK_ENTER:
+                if (doSelectedCompletion())
+                {
+                    evt.consume();
+                }
+                else
+                {
+                    dispose();
+                }
                 break;
-            case KeyEvent.VK_SPACE:
-                evt.consume();
-                break;
-            case KeyEvent.VK_BACK_SPACE:
-                 if(!canHandleBackspace)
-                 {
-                     dispose();
-                 }
-                 break;
-            case KeyEvent.VK_DELETE:
+            case KeyEvent.VK_ESCAPE:
                 dispose();
+                evt.consume();
+                break;
+            case KeyEvent.VK_UP:
+                moveRelative(-1);
+                evt.consume();
+                break;
+            case KeyEvent.VK_DOWN:
+                moveRelative(1);
+                evt.consume();
+                break;
+            case KeyEvent.VK_PAGE_UP:
+                moveRelativePages(-1);
+                evt.consume();
+                break;
+            case KeyEvent.VK_PAGE_DOWN:
+                moveRelativePages(1);
+                evt.consume();
+                break;
+            case KeyEvent.VK_SHIFT:
+                evt.consume();
                 break;
             default:
+                if(evt.isActionKey()
+                    || evt.isControlDown()
+                    || evt.isAltDown()
+                    || evt.isMetaDown())
+                {
+                    dispose();
+                }
                 break;
         }
-    }
 
-    /**
-     * @param selectedIndex The index of the selected completion.
-     * @param keyChar the character typed by the user.
-     * @return True if completion should continue, false otherwise.
-     * @since SideKick 0.3.2
-     */
-    public boolean handleKeystroke(int selectedIndex, char keyChar)
-    {
-        // if(keyChar == '\t' || keyChar == '\n')
-        if(CompletionActions.acceptChars.indexOf(keyChar) > -1)
-        {
-            validCandidates.get(selectedIndex).complete(getCompletionPrefix(), view);
-//            insert(selectedIndex);
-//            if(SideKickActions.insertChars.indexOf(keyChar) > -1)
-//                textArea.userInput(keyChar);
-            return false;
-        }
-        else
-        {
-            view.getTextArea().userInput(keyChar);
-            return true;
-        }
-    }
-
-    private void updateCompletion(boolean active)
-    {
-//        SideKickCompletion newComplete = complete;
-//        EditPane editPane = view.getEditPane();
-//        JEditTextArea textArea = editPane.getTextArea();
-//        int caret = textArea.getCaretPosition();
-//        if(!newComplete.updateInPlace(editPane, caret))
-//        {
-//            newComplete = parser.complete(editPane, caret);
-//        }
-//        if(newComplete == null || newComplete.size() == 0)
-//        {
-//            dispose();
-//        }
-//        else
-//        {
-//            complete = newComplete;
-//            setLocation(getLocation(textArea, caret, complete));
-//            reset(new Candidates(), active);
-//        }
+        return true;
     }
 
     protected void checkForValidCandidates ()
     {
-        validCandidates = candidates;
-        reset();
+        validCandidates.clear();
+        for (CompletionCandidate c : candidates) {
+            if (c.isValid(view)) {
+                validCandidates.add(c);
+            }
+        }
     }
-
 
     private static Point fitInScreen(Point p, Window w, int lineHeight)
     {
@@ -377,38 +349,13 @@ public class PopupWindow extends JWindow
         moveRelative(pageSize * n);
     }
 
-    //{{{ passKeyEventToView() method
-    private void passKeyEventToView(KeyEvent e)
+    private static Point getLocation(JEditTextArea textArea, int caret, String prefix)
     {
-        // Remove intercepter to avoid infinite recursion.
-        assert (view.getKeyEventInterceptor() == keyHandler);
-        view.setKeyEventInterceptor(null);
-
-        // Here depends on an implementation detail.
-        // Use ACTION_BAR to force processing KEY_TYPED event in
-        // the implementation of gui.InputHandler.processKeyEvent().
-        view.getInputHandler().processKeyEvent(e, View.ACTION_BAR, false);
-
-        // Restore keyHandler only if this popup is still alive.
-        // The key event might trigger dispose() of this popup.
-        if (this.isDisplayable())
-        {
-            view.setKeyEventInterceptor(keyHandler);
-        }
-    }
-
-    protected String getCompletionPrefix ()
-    {
-        return getCompletionPrefix(view.getTextArea());
-    }
-    private static String getCompletionPrefix (JEditTextArea text, int caret)
-    {
-        return "";
-    }
-
-    private static String getCompletionPrefix (JEditTextArea text)
-    {
-        return getCompletionPrefix(text, text.getCaretPosition());
+        Point location = textArea.offsetToXY(caret - prefix.length());
+        location.y += textArea.getPainter().getFontMetrics().getHeight();
+        SwingUtilities.convertPointToScreen(location,
+            textArea.getPainter());
+        return location;
     }
 
     private class CandidateListModel extends AbstractListModel
@@ -444,78 +391,6 @@ public class PopupWindow extends JWindow
         public void keyPressed(KeyEvent e)
         {
             PopupWindow.this.keyPressed(e);
-
-            if (validCandidates == null || validCandidates.size() == 0)
-            {
-                dispose();
-            }
-            else if (!e.isConsumed())
-            {
-                switch(e.getKeyCode())
-                {
-                case KeyEvent.VK_TAB:
-                case KeyEvent.VK_ENTER:
-                    if (doSelectedCompletion())
-                    {
-                        e.consume();
-                    }
-                    else
-                    {
-                        dispose();
-                    }
-                    break;
-                case KeyEvent.VK_ESCAPE:
-                    dispose();
-                    e.consume();
-                    break;
-                case KeyEvent.VK_UP:
-                    moveRelative(-1);
-                    e.consume();
-                    break;
-                case KeyEvent.VK_DOWN:
-                    moveRelative(1);
-                    e.consume();
-                    break;
-                case KeyEvent.VK_PAGE_UP:
-                    moveRelativePages(-1);
-                    e.consume();
-                    break;
-                case KeyEvent.VK_PAGE_DOWN:
-                    moveRelativePages(1);
-                    e.consume();
-                    break;
-                default:
-                    if(e.isActionKey()
-                        || e.isControlDown()
-                        || e.isAltDown()
-                        || e.isMetaDown())
-                    {
-                        dispose();
-                    }
-                    break;
-                }
-            }
-
-            if (!e.isConsumed())
-            {
-                passKeyEventToView(e);
-            }
-        }
-
-        @Override
-        public void keyTyped(KeyEvent e)
-        {
-            PopupWindow.this.keyTyped(e);
-
-            if (validCandidates == null || validCandidates.size() == 0)
-            {
-                dispose();
-            }
-
-            if (!e.isConsumed())
-            {
-                passKeyEventToView(e);
-            }
         }
     }
 
@@ -546,6 +421,4 @@ public class PopupWindow extends JWindow
             dispose();
         }
     }
-
-
 }

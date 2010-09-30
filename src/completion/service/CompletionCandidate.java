@@ -4,22 +4,21 @@ import javax.swing.ListCellRenderer;
 
 import org.gjt.sp.jedit.View;
 
-public interface CompletionCandidate
+public interface CompletionCandidate extends Comparable<CompletionCandidate>
 {
     /**
-     * Returns whether this completion is still valid after the
-     * characters have been typed.
+     * Returns whether this completion is valid, usually based on the caret position.
      */
-    public boolean isValid (String prefix);
+    public boolean isValid (View view);
 
     /**
-     * Do the completion.
+     * Insert the completion.
      */
-    public void complete (String prefix, View view);
+    public void complete (View view);
 
     /**
      * Returns a component to render a cell for the index
-     * in the popup.
+     * in the popup window.
      */
     public ListCellRenderer getCellRenderer ();
 
