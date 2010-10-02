@@ -1,8 +1,16 @@
-package completion.rendering;
+package completion.util;
 
+
+import static completion.util.CompletionUtil.createAbbrev;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import org.gjt.sp.jedit.View;
+import org.gjt.sp.jedit.buffer.JEditBuffer;
+import org.gjt.sp.jedit.textarea.TextArea;
+
+import superabbrevs.SuperAbbrevs;
 
 /**
  * Container describing a method from a
@@ -34,9 +42,42 @@ public class CodeCompletionMethod extends CodeCompletionVariable
 				s.append(":"+argumentTypes.get(i));
 			}
 		}
-		s.append("): " + returnType);
+		if (returnType != null) {
+		    s.append("): " + returnType);
+		} else {
+		    s.append(")");
+		}
 		return s.toString();
 	}
+
+	@Override
+    public void complete (View view)
+    {
+        TextArea textArea = view.getTextArea();
+        String prefix = CompletionUtil.getCompletionPrefix(view);
+        int caret = textArea.getCaretPosition();
+        JEditBuffer buffer = textArea.getBuffer();
+        try
+        {
+            buffer.beginCompoundEdit();
+            if (prefix.length() > 0) {
+                buffer.remove(caret - prefix.length(), prefix.length());
+            }
+        }
+        finally
+        {
+            buffer.endCompoundEdit();
+        }
+
+        //Check if a parametrized abbreviation is needed
+        String sig = getStringForInsertion();//tag.getExtension("signature");
+        if (sig == null || sig.length() == 0)
+            return;
+        String abbrev = createAbbrev(sig);
+        SuperAbbrevs.expandAbbrev(view, abbrev, null);
+
+
+    }
 
 	@Override
 	public String getStringForInsertion()

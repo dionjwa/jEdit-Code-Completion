@@ -6,6 +6,7 @@
                 completion.CompletionActions.completeFromCommand(view);
 		</CODE>
         </ACTION>
+        <!-- Not yet implemented  -->
         <ACTION NAME="completion-insertion">
                 <CODE>
                 completion.CompletionActions.insert(view);

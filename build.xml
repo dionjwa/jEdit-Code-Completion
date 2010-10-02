@@ -37,5 +37,7 @@
 	
         <path id="project.class.path">
                 <pathelement location="${jedit.install.dir}/jedit.jar" />
+                <pathelement location="${jedit.plugins.dir}/SuperAbbrevs.jar" />
+                <pathelement location="${jedit.plugins.dir}/CtagsInterface.jar" />
         </path>
 </project>

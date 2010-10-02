@@ -1,4 +1,4 @@
-package completion.rendering;
+package completion.util;
 
 
 import java.awt.Color;
@@ -10,7 +10,7 @@ import java.awt.RenderingHints;
 
 import javax.swing.Icon;
 
-class DiamondIcon implements Icon
+class IconDiamond implements Icon
 {
 	private static final RenderingHints r = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	private static final int DEFAULT_WIDTH = 8;
@@ -22,17 +22,17 @@ class DiamondIcon implements Icon
 	private int height;
 	private Polygon poly;
 
-	public DiamondIcon(Color color)
+	public IconDiamond(Color color)
 	{
 		this(color, true, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	}
 
-	public DiamondIcon(Color color, boolean selected)
+	public IconDiamond(Color color, boolean selected)
 	{
 		this(color, selected, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	}
 
-	public DiamondIcon(Color color, boolean selected, int width, int height)
+	public IconDiamond(Color color, boolean selected, int width, int height)
 	{
 		this.color = color;
 		this.selected = selected;

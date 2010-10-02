@@ -18,7 +18,6 @@ class CompletionBindings extends KeyAdapter
     public void keyTyped(KeyEvent evt)
     {
         evt = KeyEventWorkaround.processKeyEvent(evt);
-        completion.CompletionPlugin.trace("keyTyped " + evt);
         if(evt == null) {
             return;
         }

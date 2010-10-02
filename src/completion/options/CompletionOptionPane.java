@@ -85,9 +85,9 @@ public class CompletionOptionPane extends AbstractOptionPane
 
         autoCompleteDelay.setEnabled(autoCompleteToggle.isSelected());
 
-
-
         addComponent(autoCompletionsPanel);
+
+
 
         JPanel codeCompletionsPanel = new JPanel();
         codeCompletionsPanel.setBorder(new TitledBorder(jEdit.getProperty(
@@ -96,7 +96,13 @@ public class CompletionOptionPane extends AbstractOptionPane
 
         // addSeparator("options.completion.code-completion.label");
         JPanel completionsCheckboxes = new JPanel();
-        completionsCheckboxes.setLayout(new FlowLayout());
+        completionsCheckboxes.setLayout(new VerticalLayout(5, VerticalLayout.LEFT));
+
+        completionsCheckboxes.add(allowSelectionByNumbersToggle = new JCheckBox(jEdit.getProperty(
+            "options.completion.select-by-numbers.toggle.label")));
+        allowSelectionByNumbersToggle.setSelected(jEdit.getBooleanProperty("options.completion.select-by-numbers.toggle"));
+        allowSelectionByNumbersToggle.addActionListener(new ActionHandler());
+
         completionsCheckboxes.add(completeInstantToggle = new JCheckBox(jEdit.getProperty(
             "options.completion.complete-instant.toggle")));
         completeInstantToggle.setSelected(jEdit.getBooleanProperty("completion.complete-instant.toggle"));
@@ -112,6 +118,7 @@ public class CompletionOptionPane extends AbstractOptionPane
 
         codeCompletionsPanel.add(new JLabel(jEdit.getProperty("options.completion.complete-delay")), BorderLayout.CENTER);
         codeCompletionsPanel.add(completeDelay = new JSlider(0,1500,completeDelayValue), BorderLayout.SOUTH);
+
         addComponent(codeCompletionsPanel);
 
 
@@ -147,6 +154,8 @@ public class CompletionOptionPane extends AbstractOptionPane
         jEdit.setIntegerProperty("completion.auto-complete-delay",
             autoCompleteDelay.getValue());
 
+        jEdit.setBooleanProperty("options.completion.select-by-numbers.toggle",
+            allowSelectionByNumbersToggle.isSelected());
         jEdit.setBooleanProperty("completion.complete-instant.toggle",
             completeInstantToggle.isSelected());
         jEdit.setBooleanProperty("completion.complete-delay.toggle",
@@ -155,8 +164,8 @@ public class CompletionOptionPane extends AbstractOptionPane
             completeDelay.getValue());
         jEdit.setBooleanProperty("completion.auto-complete-popup-get-focus",
             autoCompletePopupGetFocus.isSelected());
-        jEdit.setProperty("completion.complete-popup.accept-characters",acceptChars.getText());
-        jEdit.setProperty("completion.complete-popup.insert-characters",insertChars.getText());
+        jEdit.setProperty("completion.complete-popup.accept-characters", acceptChars.getText());
+        jEdit.setProperty("completion.complete-popup.insert-characters", insertChars.getText());
     }
 
     //Triggering completion
@@ -164,7 +173,8 @@ public class CompletionOptionPane extends AbstractOptionPane
     private JSlider autoCompleteDelay;
     private JCheckBox autoCompletePopupGetFocus;
 
-    //After completion popup
+    //After completion popup is shown
+    private JCheckBox allowSelectionByNumbersToggle;
     private JCheckBox completeInstantToggle;
     private JCheckBox completeDelayToggle;
     private JSlider completeDelay;
@@ -173,11 +183,13 @@ public class CompletionOptionPane extends AbstractOptionPane
 
     class ActionHandler implements ActionListener
     {
+        @Override
         public void actionPerformed(ActionEvent evt)
         {
             Object source = evt.getSource();
             if(source == completeDelayToggle) {
                 completeDelay.setEnabled(completeDelayToggle.isSelected());
+                acceptChars.setEnabled(completeDelayToggle.isSelected());
             } else if (source == autoCompleteToggle) {
                 autoCompleteDelay.setEnabled(autoCompleteToggle.isSelected());
                 autoCompletePopupGetFocus.setEnabled(autoCompleteToggle.isSelected());

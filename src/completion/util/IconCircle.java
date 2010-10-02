@@ -1,4 +1,4 @@
-package completion.rendering;
+package completion.util;
 
 
 import java.awt.Color;
@@ -6,9 +6,10 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+
 import javax.swing.Icon;
 
-public class CircleIcon implements Icon
+public class IconCircle implements Icon
 {
 	private static RenderingHints r = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	private Color color;
@@ -19,17 +20,17 @@ public class CircleIcon implements Icon
 
 	private static final int DEFAULT_HEIGHT = 8;
 
-	public CircleIcon(Color color)
+	public IconCircle(Color color)
 	{
 		this(color, true, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	}
 
-	public CircleIcon(Color color, boolean selected)
+	public IconCircle(Color color, boolean selected)
 	{
 		this(color, selected, DEFAULT_WIDTH, DEFAULT_HEIGHT);
 	}
 
-	public CircleIcon(Color color, boolean selected, int width, int height)
+	public IconCircle(Color color, boolean selected, int width, int height)
 	{
 		this.color = color;
 		this.width = width;

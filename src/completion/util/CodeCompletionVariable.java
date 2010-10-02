@@ -1,4 +1,4 @@
-package completion.rendering;
+package completion.util;
 
 
 import javax.swing.ListCellRenderer;
@@ -7,7 +7,9 @@ import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.buffer.JEditBuffer;
 import org.gjt.sp.jedit.textarea.TextArea;
 
-import completion.CompletionActions;
+import superabbrevs.SuperAbbrevs;
+
+import completion.CompletionPlugin;
 import completion.service.CompletionCandidate;
 
 /**
@@ -37,7 +39,7 @@ public class CodeCompletionVariable implements CompletionCandidate
     public void complete (View view)
     {
 	    TextArea textArea = view.getTextArea();
-	    String prefix = CompletionActions.getCompletionPrefix(view, ".");
+	    String prefix = CompletionUtil.getCompletionPrefix(view);
         int caret = textArea.getCaretPosition();
         JEditBuffer buffer = textArea.getBuffer();
         try
@@ -52,6 +54,14 @@ public class CodeCompletionVariable implements CompletionCandidate
         {
             buffer.endCompoundEdit();
         }
+
+     // Check if a parametrized abbreviation is needed
+        String sig = name;
+        if (sig == null || sig.length() == 0)
+            return;
+        String abbrev = CompletionUtil.createAbbrev(sig);
+        CompletionPlugin.trace("complete, abbrev=" + abbrev);
+        SuperAbbrevs.expandAbbrev(view, abbrev, null);
     }
 
     @Override
@@ -63,13 +73,13 @@ public class CodeCompletionVariable implements CompletionCandidate
     @Override
     public String getDescription ()
     {
-        return name + ":" + className;
+        return name + (className != null ? ":" + className : "");
     }
 
     @Override
     public boolean isValid (View view)
     {
-        String prefix = CompletionActions.getCompletionPrefix(view, ".");
+        String prefix = CompletionUtil.getCompletionPrefix(view);
         if (prefix == null || prefix.length() == 0) {
             return true;
         }

@@ -1,5 +1,7 @@
 package completion.popup;
 
+import static completion.CompletionPlugin.trace;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
@@ -30,8 +32,9 @@ import org.gjt.sp.jedit.textarea.JEditTextArea;
 
 import completion.CompletionActions;
 import completion.service.CompletionCandidate;
+import completion.util.CompletionUtil;
 
-public class PopupWindow extends JWindow
+public class CompletionPopup extends JWindow
 {
     /**
      * Each completion service launches in a new thread, so if there are no completions we need
@@ -44,6 +47,9 @@ public class PopupWindow extends JWindow
     protected List<CompletionCandidate> candidates;
     protected List<CompletionCandidate> validCandidates;
     protected final JList list;
+    protected final int initialCaretPos;
+    protected boolean requestFocus;
+    protected boolean hasFocus;
 
     /**
      * Create a completion popup.
@@ -52,7 +58,7 @@ public class PopupWindow extends JWindow
      * this popup untill end of completion.
      * @since jEdit 4.3pre13
      */
-    public PopupWindow(View view)
+    public CompletionPopup(View view)
     {
         super(view);
         this.view = view;
@@ -80,10 +86,15 @@ public class PopupWindow extends JWindow
         candidates = new ArrayList<CompletionCandidate>();
         validCandidates = new ArrayList<CompletionCandidate>();
 
-        setLocation(getLocation(view.getTextArea(), view.getTextArea().getCaretPosition(), CompletionActions.getCompletionPrefix(view, ".")));
+        setLocation(getLocation(view.getTextArea(), view.getTextArea().getCaretPosition(), CompletionUtil.getCompletionPrefix(view)));
+        initialCaretPos = view.getTextArea().getCaretPosition();
+
+        requestFocus = false;
+        hasFocus = false;
+        setVisible(false);
     }
 
-    public PopupWindow(View view, Point location)
+    public CompletionPopup(View view, Point location)
     {
         this(view);
         if (location != null)
@@ -117,6 +128,7 @@ public class PopupWindow extends JWindow
             // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4810575
             SwingUtilities.invokeLater(new Runnable()
             {
+                @Override
                 public void run()
                 {
                     view.getTextArea().requestFocus();
@@ -127,7 +139,8 @@ public class PopupWindow extends JWindow
 
     /**
      * Some completions may not be provided instantly.  Add them when they arrive.
-     * @param candidates
+     * @param candidates Can be null, as this method still has to be called by the
+     * thread worker to reduce the thread count.
      */
     public void addCompletions (List<CompletionCandidate> newCandidates)
     {
@@ -135,6 +148,7 @@ public class PopupWindow extends JWindow
             candidates.addAll(newCandidates);
         }
         threadsRemaining--;
+        trace("CompletionPopup added " + (newCandidates == null ? "0" : newCandidates.size()) + " candidates, threads remaining=" + threadsRemaining);
         reset();
     }
 
@@ -151,8 +165,14 @@ public class PopupWindow extends JWindow
             return;
         }
 
-        if (threadsRemaining == 0 && validCandidates.size() == 1 && CompletionActions.completeInstant && doSelectedCompletion()) {
+        if (threadsRemaining == 0 && validCandidates.size() == 1 && CompletionActions.isCompleteInstant && doSelectedCompletion()) {
             return;
+        }
+
+        if (validCandidates.isEmpty() && isVisible()) {
+            setVisible(false);
+        } else if (!validCandidates.isEmpty() && !isVisible()) {
+            setVisible(true);
         }
 
         list.setModel(new CandidateListModel());
@@ -160,12 +180,21 @@ public class PopupWindow extends JWindow
         pack();
         setLocation(fitInScreen(getLocation(null),this,
             view.getTextArea().getPainter().getFontMetrics().getHeight()));
-        if (nowActive)
+
+        requestFocus = nowActive;
+        //If we're already in focus, ignore focus requests
+        requestFocus = requestFocus && !hasFocus;
+
+        if (requestFocus && !validCandidates.isEmpty())
         {
+            requestFocus = false;
+            hasFocus = true;
             setSelectedIndex(0);
             GUIUtilities.requestFocus(this,list);
         }
-        setVisible(true);
+
+
+//        setVisible(true);
         view.setKeyEventInterceptor(keyHandler);
     }
 
@@ -233,19 +262,28 @@ public class PopupWindow extends JWindow
                 validCandidates.get(0).complete(view);
                 dispose();
             } else {
-                view.getTextArea().userInput(keyChar);
+                if (Character.isJavaIdentifierPart(keyChar)) {
+                    view.getTextArea().userInput(keyChar);
+                }
                 reset();
             }
         } else if (CompletionActions.acceptChars.indexOf(keyChar) > -1) {
             validCandidates.get(selectedIndex).complete(view);
             dispose();
         } else {
-            view.getTextArea().userInput(keyChar);
+            if (Character.isJavaIdentifierPart(keyChar)) {
+                view.getTextArea().userInput(keyChar);
+            }
             reset();
         }
+
+        if (view.getTextArea().getCaretPosition() < initialCaretPos) {
+            dispose();
+        }
+        evt.consume();
     }
 
-    protected boolean handleControlKeys(KeyEvent evt)
+    protected void handleControlKeys(KeyEvent evt)
     {
         switch(evt.getKeyCode())
         {
@@ -294,7 +332,14 @@ public class PopupWindow extends JWindow
                 break;
         }
 
-        return true;
+        if (CompletionActions.isNumberSelectionEnabled && Character.isDigit(evt.getKeyChar())) {
+            int index = Character.digit(evt.getKeyChar(), 10);
+            if (index < validCandidates.size()) {
+                validCandidates.get(index).complete(view);
+                evt.consume();
+                dispose();
+            }
+        }
     }
 
     protected void checkForValidCandidates ()
@@ -360,11 +405,13 @@ public class PopupWindow extends JWindow
 
     private class CandidateListModel extends AbstractListModel
     {
+        @Override
         public int getSize()
         {
             return validCandidates.size();
         }
 
+        @Override
         public Object getElementAt(int index)
         {
             // This value is not used.
@@ -390,7 +437,7 @@ public class PopupWindow extends JWindow
         @Override
         public void keyPressed(KeyEvent e)
         {
-            PopupWindow.this.keyPressed(e);
+            CompletionPopup.this.keyPressed(e);
         }
     }
 
@@ -412,10 +459,12 @@ public class PopupWindow extends JWindow
 
     private class WindowFocusHandler implements WindowFocusListener
     {
+        @Override
         public void windowGainedFocus(WindowEvent e)
         {
         }
 
+        @Override
         public void windowLostFocus(WindowEvent e)
         {
             dispose();

@@ -24,6 +24,15 @@
 
  <chapter id="intro">
   <title> Introduction </title>
+  <para> This plugin provides a central location for registering code completion services.  Many plugins provide code completion, however, using them at the same time is cumbersome, as each plugin may use different keys or mechanisms for triggering code completion hints.
+  </para>
+  
+  <para> To use the code completion service mechanism, a plugin class must implement the completion.service.CompletionProvider interface, then add the service class in the services.xml.  See the HaXeSideKick plugin for an example.
+  </para>
+  
+  <para> Then, when a code completion popup is triggered, all services are queried for code completion hints.
+  </para>
+  </chapter>
 
  
 <appendix id="changelog">

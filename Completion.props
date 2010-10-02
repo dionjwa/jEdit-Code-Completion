@@ -1,6 +1,4 @@
-# :tabSize=4:indentSize=4:noTabs=false:folding=explicit:collapseFolds=1:
-#
-# HaXePlugin.props - Properties file for the HaXeSideKick plugin
+# Completion.props - Properties file for the Completion plugin
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +15,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 # general plugin properites
-plugin.completion.CompletionPlugin.activate=startup
+plugin.completion.CompletionPlugin.activate=defer
 plugin.completion.CompletionPlugin.name=Completion
 plugin.completion.CompletionPlugin.author=Dion Amago
 plugin.completion.CompletionPlugin.version=0.1
@@ -27,7 +25,7 @@ plugin.completion.CompletionPlugin.description=Code completion central.
 # dependencies
 plugin.completion.CompletionPlugin.depend.0=jdk 1.5
 plugin.completion.CompletionPlugin.depend.1=jedit 04.03.99.00
-
+plugin.completion.CompletionPlugin.depend.2=jdk 1.5
 
 # Plugins menu items
 plugin.completion.CompletionPlugin.menu.label=Completion
@@ -46,11 +44,11 @@ options.completion.auto-complete-delay=After last keystroke, wait (seconds):
 
 options.completion.code-completion.label=Code Completion Options
 options.completion.complete-instant.toggle=Immediately complete if possible
-options.completion.complete-delay.toggle=Show completion popups where possible
+options.completion.complete-delay.toggle=Show completion popups after trigger keystroke
 options.completion.auto-complete-popup-get-focus.toggle=Automatic completion popups get focus
-options.completion.complete-delay=After popup trigger keystroke, wait (seconds):
-options.completion.complete-popup.accept-characters=Accept characters for completion popup
-options.completion.complete-popup.insert-characters=Accept characters to insert after completion
+options.completion.complete-delay=After trigger keystroke, wait (seconds) before showing the popup:
+options.completion.complete-popup.accept-characters=Keys triggering the completion popup
+options.completion.complete-popup.insert-characters=Keys inserting a completion from the popup
 
 
 #Automatically show popup after some inactivity
@@ -60,6 +58,10 @@ completion.auto-complete-delay=1000
 # Enable completion
 completion.complete-delay.toggle=true
 completion.complete-instant.toggle=true
+
+#Allow selection by numbers
+options.completion.select-by-numbers.toggle.label=Allow selection by numbers
+options.completion.select-by-numbers.toggle=true
 
 # Initial focus of automatic completion popup
 completion.auto-complete-popup-get-focus.toggle=false

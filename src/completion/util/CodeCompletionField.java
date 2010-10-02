@@ -1,4 +1,4 @@
-package completion.rendering;
+package completion.util;
 
 public class CodeCompletionField extends CodeCompletionVariable
 {

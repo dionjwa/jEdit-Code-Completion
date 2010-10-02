@@ -1,4 +1,4 @@
-package completion.rendering;
+package completion.util;
 
 
 import java.awt.Color;
@@ -16,9 +16,9 @@ import completion.service.CompletionCandidate;
 
 public class CodeCellRenderer implements ListCellRenderer
 {
-	private static Icon greenCircleIcon = new CircleIcon(new Color(20,202,59));
-	private static Icon magentaDiamondIcon = new DiamondIcon(new Color(126, 20, 20));
-	private static Icon greyCircleIcon = new CircleIcon(Color.gray);
+	private static Icon greenCircleIcon = new IconCircle(new Color(20,202,59));
+	private static Icon magentaDiamondIcon = new IconDiamond(new Color(126, 20, 20));
+	private static Icon greyCircleIcon = new IconCircle(Color.gray);
 	protected Icon classImageIcon;
 	protected CodeCompletionType type;
 
@@ -47,38 +47,34 @@ public class CodeCellRenderer implements ListCellRenderer
 				case METHOD:
 				{
 					renderer.setIcon(greenCircleIcon);
-					renderer.setText(cc.getDescription());
 					break;
 				}
 
 				case FIELD:
 				{
 					renderer.setIcon(magentaDiamondIcon);
-					renderer.setText(cc.getDescription());
 					break;
 				}
 
 				case VARIABLE:
 				{
 					renderer.setIcon(greyCircleIcon);
-					renderer.setText(cc.getDescription());
 					break;
 				}
 
 				case CLASS:
 				{
 					renderer.setIcon(classImageIcon);
-					renderer.setText(cc.getDescription());
 					break;
 				}
 
-				default :
-				{
-					renderer.setText(cc.getDescription());
+				case UNKNOWN:
+                {
+
 					break;
 				}
 			}
-
+			renderer.setText(CompletionUtil.prefixByIndex(cc.getDescription(), index));
 		}
 		else
 		{

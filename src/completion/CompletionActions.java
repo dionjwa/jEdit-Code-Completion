@@ -22,9 +22,7 @@ import org.gjt.sp.jedit.ServiceManager;
 import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.textarea.JEditTextArea;
-import org.gjt.sp.jedit.textarea.TextArea;
-
-import completion.popup.PopupWindow;
+import completion.popup.CompletionPopup;
 import completion.service.CompletionCandidate;
 import completion.service.CompletionProvider;
 
@@ -32,54 +30,25 @@ public class CompletionActions
 {
     public enum CompletionMode { COMPLETE_COMMAND, COMPLETE_DELAY_KEY, COMPLETE_INSTANT_KEY }
 
-
     public static String acceptChars;
     public static String insertChars;
 
-    private static boolean automaticallyShowCompletionPopup;
+    private static boolean isPopupShowingAutomatically;
     private static int automaticallyShowCompletionPopupDelay;
     private static Timer autoDelayTimer;
-    private static boolean autoCompletePopupGetFocus;
+    private static boolean isAutoCompletePopupGetFocus;
 
-
-    private static boolean completeDelay;
-    public static boolean completeInstant;
+    public static boolean isNumberSelectionEnabled;
+    private static boolean isTriggerKeysEnabled;
+    public static boolean isCompleteInstant;
     private static int delay;
     private static WeakReference<JEditTextArea> delayedCompletionTarget;
     private static int caretWhenCompleteKeyPressed;
-//    private static SideKickCompletionPopup popup;
-    public static PopupWindow popup;
-
-    public static String getCompletionPrefix (View view, String startChar)
-    {
-        TextArea textArea = view.getTextArea();
-        int caret = textArea.getCaretPosition() - 1;
-        int lineStart = textArea.getLineStartOffset(textArea.getLineOfOffset(textArea.getCaretPosition()));
-        while (!(textArea.getText(caret, 1).equals(startChar) || caret <= lineStart)) {
-            caret--;
-        }
-        int prefixLength = textArea.getCaretPosition() - (caret + 1);
-        if (prefixLength > 0) {
-            return textArea.getText(caret + 1, prefixLength);
-        }
-        return "";
-    }
-
-    /**
-     * Returns if completion popups should be shown after any period of
-     * inactivity. Otherwise, they are only shown if explicitly requested
-     * by the user.
-     *
-     * Returns true by default.
-     */
-    public boolean canCompleteAnywhere()
-    {
-        return true;
-    }
+    public static CompletionPopup popup;
 
     public static void completeFromAuto (View view)
     {
-        if(!automaticallyShowCompletionPopup) {
+        if(!isPopupShowingAutomatically) {
             return;
         }
 
@@ -98,6 +67,7 @@ public class CompletionActions
         {
             autoDelayTimer = new Timer(0,new ActionListener()
             {
+                @Override
                 public void actionPerformed(ActionEvent evt)
                 {
                     JEditTextArea textArea = delayedCompletionTarget.get();
@@ -122,7 +92,7 @@ public class CompletionActions
             autoDelayTimer.stop();
         }
 
-        if (!completeInstant) {
+        if (!isTriggerKeysEnabled) {
             return;
         }
 
@@ -137,6 +107,7 @@ public class CompletionActions
         {
             autoDelayTimer = new Timer(0, new ActionListener()
             {
+                @Override
                 public void actionPerformed(ActionEvent evt)
                 {
                     JEditTextArea textArea = delayedCompletionTarget.get();
@@ -166,16 +137,15 @@ public class CompletionActions
 
     public static void complete (View view, CompletionMode completionMode)
     {
-//        EditPane editPane = view.getEditPane();
-//        Buffer buffer = editPane.getBuffer();
-//        JEditTextArea textArea = editPane.getTextArea();
-
-
         if (popup != null) {
             popup.dispose();
         }
 
-        popup = new PopupWindow(view);//, completionMode, autoCompletePopupGetFocus || completionMode == CompletionMode.COMPLETE_COMMAND, completeInstant);
+        if(!view.getTextArea().getBuffer().isEditable()) {
+            return;
+        }
+
+        popup = new CompletionPopup(view);//, completionMode, isAutoCompletePopupGetFocus || completionMode == CompletionMode.COMPLETE_COMMAND, isCompleteInstant);
         popup.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
@@ -183,11 +153,10 @@ public class CompletionActions
             }
         });
 
-        trace("complete, CompletionPlugin.serviceNames=" + Arrays.toString(ServiceManager.getServiceNames(CompletionProvider.class)));
-
         //Some completion computations may take some time.  Run in a work thread and add when finished
         //so they don't block the whole completion process.
         Mode mode = view.getTextArea().getBuffer().getMode();
+        trace("Services=" + Arrays.toString(ServiceManager.getServiceNames(CompletionProvider.class)));
         for (String serviceName : ServiceManager.getServiceNames(CompletionProvider.class)) {
             final CompletionProvider provider = ServiceManager.getService(CompletionProvider.class, serviceName);
             Collection<Mode> modes = provider.restrictToModes();
@@ -198,115 +167,34 @@ public class CompletionActions
             }
         }
 
-//        SideKickCompletion complete = null;
-
-//        if(buffer.isEditable())
-//        {
-//            complete = parser.complete(editPane,
-//                textArea.getCaretPosition());
-//        }
-
-//        if(complete == null || complete.size() == 0)
-//        {
-//            if(mode == COMPLETE_INSTANT_KEY
-//                || mode == COMPLETE_DELAY_KEY)
-//            {
-//                // don't bother user with beep if eg
-//                // they press < in XML mode
-//                return;
-//            }
-//            else
-//            {
-//                view.getToolkit().beep();
-//                return;
-//            }
-//        }
-//        else if(complete.size() == 1)
-//        {
-//            // if user invokes complete explicitly, insert the
-//            // completion immediately.
-//            //
-//            // if the user eg enters </ in XML mode, there will
-//            // only be one completion and / is an instant complete
-//            // key, so we insert it
-//            if(mode == COMPLETE_COMMAND
-//                || mode == COMPLETE_INSTANT_KEY)
-//            {
-//                complete.insert(0);
-//                return;
-//            }
-//        }
-
-        // show the popup if
-        // - complete has one element and user invoked with delay key
-        // - or complete has multiple elements
-        // and popup is not already shown because of explicit invocation
-        // of the complete action during the trigger delay
-//        if(popup != null)
-//            return;
-//
-//        boolean active = (mode == COMPLETE_COMMAND)
-//            || autoCompletePopupGetFocus;
-//        popup = parser.getCompletionPopup(view,
-//            textArea.getCaretPosition(), complete, active);
-//        popup.addWindowListener(new WindowAdapter() {
-//            public void windowClosed(WindowEvent e) {
-//                popup = null;
-//            }
-//        });
+        if (completionMode == CompletionMode.COMPLETE_DELAY_KEY && isAutoCompletePopupGetFocus) {
+            popup.reset(true);
+        }
     }
-
-    public static void insert (View view)
-    {
-
-    }
-
-//    private static void complete (final View view, boolean fromKeyStroke)
-//    {
-//
-//        if (popup != null) {
-//            popup.dispose();
-//        }
-//
-//        popup = new PopupWindow(view, fromKeyStroke);
-//
-//        trace("complete, CompletionPlugin.serviceNames=" + Arrays.toString(ServiceManager.getServiceNames(CompletionProvider.class)));
-//
-//        //Some completion computations may take some time.  Run in a work thread and add when finished
-//        //so they don't block the whole completion process.
-//        Mode mode = view.getTextArea().getBuffer().getMode();
-//        for (String serviceName : ServiceManager.getServiceNames(CompletionProvider.class)) {
-//            final CompletionProvider provider = ServiceManager.getService(CompletionProvider.class, serviceName);
-//            Collection<Mode> modes = provider.getModes();
-//            if (modes == null || modes.contains(mode)) {
-//                CompletionSwingWorker worker = new CompletionSwingWorker(provider, popup, view);
-//                worker.execute();
-//                popup.threadsRemaining++;
-//            }
-//        }
-//    }
 
     public static void propertiesChanged()
     {
-        automaticallyShowCompletionPopup = jEdit.getBooleanProperty("completion.auto-complete.toggle");
+        isPopupShowingAutomatically = jEdit.getBooleanProperty("completion.auto-complete.toggle");
+        isAutoCompletePopupGetFocus = jEdit.getBooleanProperty("completion.auto-complete-popup-get-focus");
         automaticallyShowCompletionPopupDelay = jEdit.getIntegerProperty("completion.auto-complete-delay", 500);
-        completeDelay = jEdit.getBooleanProperty("completion.complete-delay.toggle");
-        completeInstant = jEdit.getBooleanProperty("completion.complete-instant.toggle");
-        autoCompletePopupGetFocus = jEdit.getBooleanProperty("completion.auto-complete-popup-get-focus");
+
+        isCompleteInstant = jEdit.getBooleanProperty("completion.complete-instant.toggle");
+        isTriggerKeysEnabled = jEdit.getBooleanProperty("completion.complete-delay.toggle");
         acceptChars = MiscUtilities.escapesToChars(jEdit.getProperty("completion.complete-popup.accept-characters"));
         insertChars = MiscUtilities.escapesToChars(jEdit.getProperty("completion.complete-popup.insert-characters"));
         delay = jEdit.getIntegerProperty("completion.complete-delay",500);
         if(autoDelayTimer != null)
             autoDelayTimer.setInitialDelay(delay);
+        isNumberSelectionEnabled = jEdit.getBooleanProperty("options.completion.select-by-numbers.toggle");
     }
 
     private static class CompletionSwingWorker extends SwingWorker<List<CompletionCandidate>, Object>
     {
         private CompletionProvider provider;
-        private PopupWindow popup;
+        private CompletionPopup popup;
         private View view;
 
-        public CompletionSwingWorker(CompletionProvider provider, PopupWindow popup, View view)
+        public CompletionSwingWorker(CompletionProvider provider, CompletionPopup popup, View view)
         {
             this.provider = provider;
             this.popup = popup;
@@ -317,9 +205,6 @@ public class CompletionActions
         protected List<CompletionCandidate> doInBackground ()
             throws Exception
         {
-            // TODO Auto-generated method stub
-            trace("doInBackground provider.getCompletionCandidates");
-
             try {
                 List<CompletionCandidate> candidates = provider.getCompletionCandidates(view);
                 return candidates;
@@ -328,22 +213,14 @@ public class CompletionActions
                 trace(e);
                 e.printStackTrace();
             }
-            return new ArrayList<CompletionCandidate>();//provider.getCompletionCandidates(view);
+            return new ArrayList<CompletionCandidate>();
         }
 
         @Override
         protected void done ()
         {
-            trace("DONE");
-//            popup.threadsRemaining--;
             try {
-                trace("CompletionPlugin.currentPopup == popup=" + (CompletionActions.popup== popup));
-                trace("isDone=" + isDone());
-                trace("isCancelled()=" + isCancelled());
-                trace("state=" + getState());
                 if (CompletionActions.popup == popup) {
-                    trace("popup=" + popup);
-                    trace("get()=" + get());
                     popup.addCompletions(get());
                 }
             } catch (ExecutionException ignore) {
@@ -352,9 +229,6 @@ public class CompletionActions
             } catch (InterruptedException ignore) {
                 trace(ignore);
             }
-
-
-
         }
 
     }
