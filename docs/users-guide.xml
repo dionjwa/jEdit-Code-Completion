@@ -27,10 +27,23 @@
   <para> This plugin provides a central location for registering code completion services.  Many plugins provide code completion, however, using them at the same time is cumbersome, as each plugin may use different keys or mechanisms for triggering code completion hints.
   </para>
   
-  <para> To use the code completion service mechanism, a plugin class must implement the completion.service.CompletionProvider interface, then add the service class in the services.xml.  See the HaXeSideKick plugin for an example.
+  <para> To use the code completion service mechanism, a plugin class must implement the completion.service.CompletionProvider interface, then add the service class in the services.xml.  For example, your services.xml file might look like this:
   </para>
   
-  <para> Then, when a code completion popup is triggered, all services are queried for code completion hints.
+  <para>
+            <programlisting>
+&lt;!DOCTYPE SERVICES SYSTEM "services.dtd"&gt;
+
+&lt;SERVICES&gt;
+        &lt;SERVICE CLASS="completion.service.CompletionProvider" NAME="haxe"&gt;
+                new sidekick.haxe.HaxeCodeCompletion();
+        &lt;/SERVICE&gt;
+&lt;/SERVICES&gt;
+</programlisting>
+</para>
+
+  
+  <para> Then, when a code completion popup is triggered, all registered services are queried for code completion hints, and the hints are combined into a single popup.
   </para>
   </chapter>
 

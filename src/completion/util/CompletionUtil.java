@@ -24,14 +24,11 @@ public class CompletionUtil
        TextArea textArea = view.getTextArea();
        String prefix = "";
        int caret = textArea.getCaretPosition() - 1;
-//       trace("General prefix area=" + textArea.getText(caret, 4));
        String token = textArea.getText(caret, 1);
-//       trace("is " + token + " identifier?" + Character.isJavaIdentifierPart(token.charAt(0)));
        while (caret > -1 && Character.isJavaIdentifierPart(token.charAt(0))) {
            prefix = token + prefix;
            caret--;
            token = textArea.getText(caret, 1);
-//           trace("is " + textArea.getText(caret, 1).charAt(0) + " identifier?" + Character.isJavaIdentifierPart(textArea.getText(caret, 1).charAt(0)));
        }
        return prefix;
    }
