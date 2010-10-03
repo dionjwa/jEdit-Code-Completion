@@ -14,7 +14,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JList;
@@ -44,7 +46,7 @@ public class CompletionPopup extends JWindow
     public boolean canHandleBackspace;
     protected final View view;
     protected final KeyHandler keyHandler;
-    protected List<CompletionCandidate> candidates;
+    protected Map<String, List<CompletionCandidate>> candidates;
     protected List<CompletionCandidate> validCandidates;
     protected final JList list;
     protected final int initialCaretPos;
@@ -83,7 +85,7 @@ public class CompletionPopup extends JWindow
 
         canHandleBackspace = true;
 
-        candidates = new ArrayList<CompletionCandidate>();
+        candidates = new HashMap<String, List<CompletionCandidate>>();
         validCandidates = new ArrayList<CompletionCandidate>();
 
         setLocation(getLocation(view.getTextArea(), view.getTextArea().getCaretPosition(), CompletionUtil.getCompletionPrefix(view)));
@@ -142,13 +144,11 @@ public class CompletionPopup extends JWindow
      * @param candidates Can be null, as this method still has to be called by the
      * thread worker to reduce the thread count.
      */
-    public void addCompletions (List<CompletionCandidate> newCandidates)
+    public void addCompletions (String serviceName, List<CompletionCandidate> newCandidates)
     {
-        if (newCandidates != null) {
-            candidates.addAll(newCandidates);
-        }
+        candidates.put(serviceName, newCandidates);
         threadsRemaining--;
-        trace("CompletionPopup added " + (newCandidates == null ? "0" : newCandidates.size()) + " candidates, threads remaining=" + threadsRemaining);
+        trace("CompletionPopup: " + serviceName + " added " + (newCandidates == null ? "0" : newCandidates.size()) + " candidates, threads remaining=" + threadsRemaining);
         reset();
     }
 
@@ -193,8 +193,6 @@ public class CompletionPopup extends JWindow
             GUIUtilities.requestFocus(this,list);
         }
 
-
-//        setVisible(true);
         view.setKeyEventInterceptor(keyHandler);
     }
 
@@ -345,9 +343,15 @@ public class CompletionPopup extends JWindow
     protected void checkForValidCandidates ()
     {
         validCandidates.clear();
-        for (CompletionCandidate c : candidates) {
-            if (c.isValid(view)) {
-                validCandidates.add(c);
+        for (String serviceName :CompletionActions.serviceOrder) {
+            List<CompletionCandidate> ccs = candidates.get(serviceName);
+            if (ccs != null) {
+                for (CompletionCandidate c : ccs) {
+                    if (c.isValid(view)) {
+                        validCandidates.add(c);
+                    }
+                }
+
             }
         }
     }

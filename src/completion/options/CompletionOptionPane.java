@@ -22,19 +22,17 @@
 
 package completion.options;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 
 import org.gjt.sp.jedit.AbstractOptionPane;
 import org.gjt.sp.jedit.ServiceManager;
@@ -52,18 +50,8 @@ public class CompletionOptionPane extends AbstractOptionPane
     @Override
     protected void _init()
     {
-        JPanel autoCompletionsPanel = new JPanel();
-        autoCompletionsPanel.setBorder(new TitledBorder(jEdit.getProperty(
-            "options.completion.auto-completion.label")));
-        autoCompletionsPanel.setLayout(new VerticalLayout(5, VerticalLayout.LEFT));
-        autoCompletionsPanel.setMinimumSize(new Dimension(1000, 50));
-
-
-//        JPanel autoCompletionsCheckboxes = new JPanel();
-//        autoCompletionsCheckboxes.setLayout(new VerticalLayout(5, VerticalLayout.LEFT));
-//        autoCompletionsPanel.add(autoCompletionsCheckboxes, BorderLayout.NORTH);
-
-        autoCompletionsPanel.add(autoCompleteToggle = new JCheckBox(jEdit.getProperty(
+        addSeparator("options.completion.auto-completion.label");
+        addComponent(autoCompleteToggle = new JCheckBox(jEdit.getProperty(
         "options.completion.auto-complete.toggle")));
         autoCompleteToggle.setSelected(jEdit.getBooleanProperty("completion.auto-complete.toggle"));
         autoCompleteToggle.addActionListener(new ActionHandler());
@@ -71,12 +59,12 @@ public class CompletionOptionPane extends AbstractOptionPane
         autoCompletePopupGetFocus = new JCheckBox(
             jEdit.getProperty("options.completion.auto-complete-popup-get-focus.toggle"),
             jEdit.getBooleanProperty("completion.auto-complete-popup-get-focus.toggle"));
-        autoCompletionsPanel.add(autoCompletePopupGetFocus);
+        addComponent(autoCompletePopupGetFocus);
 
         int autoCompleteDelayValue = jEdit.getIntegerProperty("completion.auto-complete-delay",500);
 
-        autoCompletionsPanel.add(new JLabel(jEdit.getProperty("options.completion.auto-complete-delay")), BorderLayout.CENTER);
-        autoCompletionsPanel.add(autoCompleteDelay = new JSlider(0,1500,autoCompleteDelayValue), BorderLayout.SOUTH);
+        addComponent(new JLabel(jEdit.getProperty("options.completion.auto-complete-delay")));
+        addComponent(autoCompleteDelay = new JSlider(0,1500,autoCompleteDelayValue));
         Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
         for(int i = 0; i <= 1500; i += 250)
         {
@@ -90,47 +78,27 @@ public class CompletionOptionPane extends AbstractOptionPane
 
         autoCompleteDelay.setEnabled(autoCompleteToggle.isSelected());
 
-        addComponent(autoCompletionsPanel);
-        autoCompletionsPanel.setMaximumSize(new Dimension(3000, 1000));
-//        autoCompletionsPanel.validate();
-//        autoCompletionsPanel.setSize(800, autoCompletionsPanel.getHeight());
+         addSeparator("options.completion.code-completion.label");
 
-
-
-        JPanel codeCompletionsPanel = new JPanel();
-        codeCompletionsPanel.setBorder(new TitledBorder(jEdit.getProperty(
-            "options.completion.code-completion.label")));
-        codeCompletionsPanel.setLayout(new VerticalLayout(5, VerticalLayout.LEFT));
-        codeCompletionsPanel.setMinimumSize(new Dimension(500, 50));
-
-        // addSeparator("options.completion.code-completion.label");
-//        JPanel completionsCheckboxes = new JPanel();
-//        completionsCheckboxes.setLayout(new VerticalLayout(5, VerticalLayout.LEFT));
-
-        codeCompletionsPanel.add(allowSelectionByNumbersToggle = new JCheckBox(jEdit.getProperty(
+        addComponent(allowSelectionByNumbersToggle = new JCheckBox(jEdit.getProperty(
             "options.completion.select-by-numbers.toggle.label")));
         allowSelectionByNumbersToggle.setSelected(jEdit.getBooleanProperty("options.completion.select-by-numbers.toggle"));
         allowSelectionByNumbersToggle.addActionListener(new ActionHandler());
 
-        codeCompletionsPanel.add(completeInstantToggle = new JCheckBox(jEdit.getProperty(
+        addComponent(completeInstantToggle = new JCheckBox(jEdit.getProperty(
             "options.completion.complete-instant.toggle")));
         completeInstantToggle.setSelected(jEdit.getBooleanProperty("completion.complete-instant.toggle"));
         completeInstantToggle.addActionListener(new ActionHandler());
 
-        codeCompletionsPanel.add(completeDelayToggle = new JCheckBox(jEdit.getProperty(
+        addComponent(completeDelayToggle = new JCheckBox(jEdit.getProperty(
             "options.completion.complete-delay.toggle")));
         completeDelayToggle.setSelected(jEdit.getBooleanProperty("completion.complete-delay.toggle"));
         completeDelayToggle.addActionListener(new ActionHandler());
-//        codeCompletionsPanel.add(completionsCheckboxes, BorderLayout.NORTH);
 
         int completeDelayValue = jEdit.getIntegerProperty("completion.complete-delay",500);
 
-        codeCompletionsPanel.add(new JLabel(jEdit.getProperty("options.completion.complete-delay")), BorderLayout.CENTER);
-        codeCompletionsPanel.add(completeDelay = new JSlider(0,1500,completeDelayValue), BorderLayout.SOUTH);
-
-        addComponent(codeCompletionsPanel);
-
-
+        addComponent(new JLabel(jEdit.getProperty("options.completion.complete-delay")));
+        addComponent(completeDelay = new JSlider(0,1500,completeDelayValue));
 
         labelTable = new Hashtable<Integer, JLabel>();
         for(int i = 0; i <= 1500; i += 250)
@@ -153,10 +121,26 @@ public class CompletionOptionPane extends AbstractOptionPane
             insertChars = new JTextField(
                 jEdit.getProperty("completion.complete-popup.insert-characters")));
 
-        OrderedListPanel<String> modeOrder = new OrderedListPanel<String>();
+        add(new JLabel(""));
+        addSeparator("options.completion.service-order.label");
+        modeOrder = new OrderedListPanel<String>();
         addComponent(modeOrder);
-        modeOrder.setList(Arrays.asList(ServiceManager.getServiceNames(CompletionProvider.class)));
-
+        List<String> currentModeOrder = new ArrayList<String>();
+        List<String> serviceNames = Arrays.asList(ServiceManager.getServiceNames(CompletionProvider.class));
+        String orderString = jEdit.getProperty("options.completion.service-order");
+        if (orderString != null) {
+            for (String s : orderString.split(",")) {
+                if (s.trim().length() > 0 && serviceNames.contains(s.trim())) {
+                    currentModeOrder.add(s.trim());
+                }
+            }
+        }
+        for (String serviceName :serviceNames) {
+            if (!currentModeOrder.contains(serviceName)) {
+                currentModeOrder.add(serviceName);
+            }
+        }
+        modeOrder.setList(currentModeOrder);
     }
 
     @Override
@@ -179,6 +163,12 @@ public class CompletionOptionPane extends AbstractOptionPane
             autoCompletePopupGetFocus.isSelected());
         jEdit.setProperty("completion.complete-popup.accept-characters", acceptChars.getText());
         jEdit.setProperty("completion.complete-popup.insert-characters", insertChars.getText());
+
+        String serviceOrder = "";
+        for (String s :modeOrder.getList()) {
+            serviceOrder += s + ",";
+        }
+        jEdit.setProperty("options.completion.service-order", serviceOrder);
     }
 
     //Triggering completion
@@ -193,6 +183,7 @@ public class CompletionOptionPane extends AbstractOptionPane
     private JSlider completeDelay;
     private JTextField acceptChars;
     private JTextField insertChars;
+    private OrderedListPanel<String> modeOrder;
 
     class ActionHandler implements ActionListener
     {

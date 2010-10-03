@@ -22,6 +22,7 @@ import org.gjt.sp.jedit.ServiceManager;
 import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.jEdit;
 import org.gjt.sp.jedit.textarea.JEditTextArea;
+
 import completion.popup.CompletionPopup;
 import completion.service.CompletionCandidate;
 import completion.service.CompletionProvider;
@@ -45,6 +46,7 @@ public class CompletionActions
     private static WeakReference<JEditTextArea> delayedCompletionTarget;
     private static int caretWhenCompleteKeyPressed;
     public static CompletionPopup popup;
+    public static List<String> serviceOrder;
 
     public static void completeFromAuto (View view)
     {
@@ -161,7 +163,7 @@ public class CompletionActions
             final CompletionProvider provider = ServiceManager.getService(CompletionProvider.class, serviceName);
             Collection<Mode> modes = provider.restrictToModes();
             if (modes == null || modes.contains(mode)) {
-                CompletionSwingWorker worker = new CompletionSwingWorker(provider, popup, view);
+                CompletionSwingWorker worker = new CompletionSwingWorker(serviceName, provider, popup, view);
                 popup.threadsRemaining++;
                 worker.execute();
             }
@@ -186,6 +188,16 @@ public class CompletionActions
         if(autoDelayTimer != null)
             autoDelayTimer.setInitialDelay(delay);
         isNumberSelectionEnabled = jEdit.getBooleanProperty("options.completion.select-by-numbers.toggle");
+
+        serviceOrder = new ArrayList<String>();
+        String serviceOrderString = jEdit.getProperty("options.completion.service-order");
+        if (serviceOrderString != null) {
+            for (String s : serviceOrderString.split(",")) {
+                if (s.trim().length() > 0) {
+                    serviceOrder.add(s.trim());
+                }
+            }
+        }
     }
 
     private static class CompletionSwingWorker extends SwingWorker<List<CompletionCandidate>, Object>
@@ -193,9 +205,11 @@ public class CompletionActions
         private CompletionProvider provider;
         private CompletionPopup popup;
         private View view;
+        private String serviceName;
 
-        public CompletionSwingWorker(CompletionProvider provider, CompletionPopup popup, View view)
+        public CompletionSwingWorker(String serviceName, CompletionProvider provider, CompletionPopup popup, View view)
         {
+            this.serviceName = serviceName;
             this.provider = provider;
             this.popup = popup;
             this.view = view;
@@ -221,7 +235,7 @@ public class CompletionActions
         {
             try {
                 if (CompletionActions.popup == popup) {
-                    popup.addCompletions(get());
+                    popup.addCompletions(serviceName, get());
                 }
             } catch (ExecutionException ignore) {
                 trace(ignore.getMessage());

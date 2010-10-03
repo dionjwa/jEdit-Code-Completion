@@ -39,17 +39,19 @@ options.completion.code=new completion.options.CompletionOptionPane();
 
 
 options.completion.auto-completion.label=Auto Completion Popup Options
-options.completion.auto-complete.toggle=Automatically show completion popup
+options.completion.auto-complete.toggle=Automatically show completion popup (after any key)
 options.completion.auto-complete-delay=After last keystroke, wait (seconds):
 
 options.completion.code-completion.label=Code Completion Options
-options.completion.complete-instant.toggle=Immediately complete if possible
+options.completion.complete-instant.toggle=Immediately complete if possible (if there is only one code completion)
 options.completion.complete-delay.toggle=Show completion popups after trigger keystroke
 options.completion.auto-complete-popup-get-focus.toggle=Automatic completion popups get focus
 options.completion.complete-delay=After trigger keystroke, wait (seconds) before showing the popup:
 options.completion.complete-popup.accept-characters=Keys triggering the completion popup
 options.completion.complete-popup.insert-characters=Keys inserting a completion from the popup
 
+options.completion.service-order.label=Order completion services are shown in the popup
+options.completion.service-order=
 
 #Automatically show popup after some inactivity
 completion.auto-complete.toggle=true

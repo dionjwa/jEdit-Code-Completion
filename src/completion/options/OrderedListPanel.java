@@ -12,7 +12,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -33,14 +32,11 @@ public class OrderedListPanel<T> extends JPanel
     {
         super();
 
-        caption = new JLabel("some caption");
-
+        caption = new JLabel("Completion plugin/service order");
         setLayout(new BorderLayout());
-
         add(BorderLayout.NORTH, caption);
 
         listModel = new DefaultListModel();
-//        reloadContextList(getContextMenu());
 
         list = new JList(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -64,12 +60,6 @@ public class OrderedListPanel<T> extends JPanel
         moveDown.addActionListener(actionHandler);
         buttons.add(moveDown);
         buttons.add(Box.createGlue());
-
-        // add "reset to defaults" button
-        reset = new RolloverButton(GUIUtilities.loadIcon(jEdit.getProperty("options.context.reset.icon")));
-        reset.setToolTipText(jEdit.getProperty("options.context.reset"));
-        reset.addActionListener(actionHandler);
-        buttons.add(reset);
 
         updateButtons();
         add(BorderLayout.SOUTH, buttons);
@@ -100,32 +90,9 @@ public class OrderedListPanel<T> extends JPanel
         moveDown.setEnabled(index != -1 && index != listModel.getSize() - 1);
     }
 
-//    private void reloadContextList(String contextMenu)
-//    {
-//        listModel.clear();
-//        StringTokenizer st = new StringTokenizer(contextMenu);
-//        while(st.hasMoreTokens())
-//        {
-//            String actionName = st.nextToken();
-//            if(actionName.equals("-"))
-//                listModel.addElement(new ListItem("-","-"));
-//            else
-//            {
-//                EditAction action = jEdit.getAction(actionName);
-//                if(action == null)
-//                    continue;
-//                String label = action.getLabel();
-//                if(label == null)
-//                    continue;
-//                listModel.addElement(new ListItem(actionName,label));
-//            }
-//        }
-//    }
-
     private DefaultListModel listModel;
     private JList list;
     private JButton moveUp, moveDown;
-    private JButton reset;
     private JLabel caption;
     private JPanel buttons;
 
@@ -153,31 +120,6 @@ public class OrderedListPanel<T> extends JPanel
                 list.setSelectedIndex(index+1);
                 list.ensureIndexIsVisible(index+1);
             }
-            else if(source == reset)
-            {
-                String dialogType = "options.context.reset.dialog";
-                int result = GUIUtilities.confirm(list,dialogType,null,
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-                if(result == JOptionPane.YES_OPTION)
-                {
-                    // the user should be able to cancel the options dialog
-                    // so we need to modify the list, not the actual property
-                    // since the default value is not available,
-                    // we reset, fetch default value and re-set to original
-                    String orgContext = jEdit.getProperty("view.context");
-                    jEdit.resetProperty("view.context");
-                    String defaultContext = jEdit.getProperty("view.context");
-                    jEdit.setProperty("view.context", orgContext);
-//                    reloadContextList(defaultContext);
-
-                    // reset selection if user had more buttons than default
-                    list.setSelectedIndex(0);
-                    list.ensureIndexIsVisible(0);
-                    updateButtons();
-                }
-            }
         }
     }
 
@@ -189,23 +131,6 @@ public class OrderedListPanel<T> extends JPanel
         }
     }
 
-//    static class ListItem
-//    {
-//        String actionName;
-//        String label;
-//
-//        ListItem(String actionName, String label)
-//        {
-//            this.actionName = actionName;
-//            this.label = GUIUtilities.prettifyMenuLabel(label);
-//        }
-//
-//        public String toString()
-//        {
-//            return label;
-//        }
-//    }
-
     static class ItemCompare implements Comparator<Object>
     {
         public int compare(Object obj1, Object obj2)
@@ -213,5 +138,4 @@ public class OrderedListPanel<T> extends JPanel
             return StandardUtilities.compareStrings(obj1.toString(), obj2.toString(), true);
         }
     }
-
 }
