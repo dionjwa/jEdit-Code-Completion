@@ -42,17 +42,8 @@ public class CodeCompletionVariable implements CompletionCandidate
 	    String prefix = CompletionUtil.getCompletionPrefix(view);
         int caret = textArea.getCaretPosition();
         JEditBuffer buffer = textArea.getBuffer();
-        try
-        {
-            buffer.beginCompoundEdit();
-            if (prefix.length() > 0) {
-                buffer.remove(caret - prefix.length(), prefix.length());
-            }
-            buffer.insert(caret - prefix.length(), getStringForInsertion());
-        }
-        finally
-        {
-            buffer.endCompoundEdit();
+        if (prefix.length() > 0) {
+            buffer.remove(caret - prefix.length(), prefix.length());
         }
 
      // Check if a parametrized abbreviation is needed

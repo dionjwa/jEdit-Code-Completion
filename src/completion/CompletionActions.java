@@ -200,6 +200,20 @@ public class CompletionActions
         }
     }
 
+    public static void movePopupCursorUp ()
+    {
+        if (popup != null) {
+            popup.moveRelative(-1);
+        }
+    }
+
+    public static void movePopupCursorDown ()
+    {
+        if (popup != null) {
+            popup.moveRelative(1);
+        }
+    }
+
     private static class CompletionSwingWorker extends SwingWorker<List<CompletionCandidate>, Object>
     {
         private CompletionProvider provider;

@@ -37,6 +37,9 @@
 	
         <path id="project.class.path">
                 <pathelement location="${jedit.install.dir}/jedit.jar" />
+                <!-- Although these plugin jars are needed to build, they
+                        are needed for optional classes, and are compulsory 
+                        runtime dependencies-->
                 <pathelement location="${jedit.plugins.dir}/SuperAbbrevs.jar" />
                 <pathelement location="${jedit.plugins.dir}/CtagsInterface.jar" />
         </path>

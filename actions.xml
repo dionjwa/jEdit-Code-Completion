@@ -6,11 +6,14 @@
                 completion.CompletionActions.completeFromCommand(view);
 		</CODE>
         </ACTION>
-        <!-- Not yet implemented  
-        <ACTION NAME="completion-insertion">
+        <ACTION NAME="completion-popup-cursor-down">
                 <CODE>
-                completion.CompletionActions.insert(view);
+                completion.CompletionActions.movePopupCursorDown();
 		</CODE>
         </ACTION>
-        -->
+        <ACTION NAME="completion-popup-cursor-up">
+                <CODE>
+                completion.CompletionActions.movePopupCursorUp();
+		</CODE>
+        </ACTION>
 </ACTIONS>

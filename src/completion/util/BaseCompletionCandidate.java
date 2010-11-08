@@ -27,8 +27,7 @@ public class BaseCompletionCandidate
     @Override
     public int compareTo (CompletionCandidate o)
     {
-        // TODO Auto-generated method stub
-        return 0;
+        return getDescription().compareTo(o.getDescription());
     }
 
     @Override

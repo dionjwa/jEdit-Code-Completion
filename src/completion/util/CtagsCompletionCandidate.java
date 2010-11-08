@@ -26,7 +26,7 @@ import static completion.util.CompletionUtil.createAbbrev;
 public class CtagsCompletionCandidate extends DefaultListCellRenderer
     implements CompletionCandidate
 {
-    private Tag tag;
+    public Tag tag;
 
     public CtagsCompletionCandidate (Tag tag)
     {
@@ -104,7 +104,9 @@ public class CtagsCompletionCandidate extends DefaultListCellRenderer
     @Override
     public int compareTo (CompletionCandidate o)
     {
-        // TODO Auto-generated method stub
-        return 0;
+        if (o instanceof CtagsCompletionCandidate) {
+            tag.getName().compareTo(((CtagsCompletionCandidate)o).tag.getName());
+        }
+        return tag.getName().compareTo(o.getDescription());
     }
 }

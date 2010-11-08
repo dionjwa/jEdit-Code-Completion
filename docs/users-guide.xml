@@ -27,7 +27,10 @@
   <para> This plugin provides a central location for registering code completion services.  Many plugins provide code completion, however, using them at the same time is cumbersome, as each plugin may use different keys or mechanisms for triggering code completion hints.
   </para>
   
-  <para> To use the code completion service mechanism, a plugin class must implement the completion.service.CompletionProvider interface, then add the service class in the services.xml.  For example, your services.xml file might look like this:
+  <para> If any plugin provides a completion service, this plugin will show code completion hints.  Hints can be shown automatically after a delay, or after some predefined keystrokes, or as an action bound to a shortcut.
+  </para>
+  
+  <para> For developers: to use the code completion service mechanism, a class must implement the completion.service.CompletionProvider interface, then add the service class in the services.xml.  For example, your services.xml file might look like this (from the HaxeSideKick plugin):
   </para>
   
   <para>

@@ -1,5 +1,14 @@
 Completion plugin for jEdit.
 
-GPL license.
+Many different plugins offer their own code completion functionality.
 
-More to come.
+This makes it difficult or impossible to simultaneously get code completion hints from all or more than one plugin.
+
+This plugin accepts code completion services offered by other plugins.
+
+As a practical example, with a single shortcut, I'm offered completion hints from the following plugins at the same time:
+HaXeSidekick
+SuperAbbreves
+CtagsInterface
+TextAutocomplete 
+

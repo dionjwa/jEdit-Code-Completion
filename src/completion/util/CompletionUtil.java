@@ -2,7 +2,6 @@ package completion.util;
 
 import org.gjt.sp.jedit.View;
 import org.gjt.sp.jedit.textarea.TextArea;
-
 import completion.CompletionActions;
 
 public class CompletionUtil
@@ -28,6 +27,37 @@ public class CompletionUtil
        while (caret > -1 && Character.isJavaIdentifierPart(token.charAt(0))) {
            prefix = token + prefix;
            caret--;
+           if (caret < 0) {
+               break;
+           }
+           token = textArea.getText(caret, 1);
+       }
+       return prefix;
+   }
+
+   public static String getWordAtCaret (View view)
+   {
+       TextArea textArea = view.getTextArea();
+       String prefix = "";
+       int caret = textArea.getCaretPosition() - 1;
+       String token = textArea.getText(caret, 1);
+       while (caret > -1 && Character.isJavaIdentifierPart(token.charAt(0))) {
+           prefix = token + prefix;
+           caret--;
+           if (caret < 0) {
+               break;
+           }
+           token = textArea.getText(caret, 1);
+       }
+       caret = textArea.getCaretPosition();
+       int lineEnd = textArea.getLineEndOffset(textArea.getLineOfOffset(caret));
+       token = textArea.getText(caret, 1);
+       while (caret < lineEnd && Character.isJavaIdentifierPart(token.charAt(0))) {
+           prefix += token;
+           caret++;
+           if (caret >= lineEnd) {
+               break;
+           }
            token = textArea.getText(caret, 1);
        }
        return prefix;

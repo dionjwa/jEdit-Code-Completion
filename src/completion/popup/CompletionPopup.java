@@ -364,7 +364,7 @@ public class CompletionPopup extends JWindow
         return p;
     }
 
-    private void moveRelative(int n)
+    public void moveRelative(int n)
     {
         int selected = list.getSelectedIndex();
 
@@ -392,7 +392,7 @@ public class CompletionPopup extends JWindow
         }
     }
 
-    private void moveRelativePages(int n)
+    public void moveRelativePages(int n)
     {
         int pageSize = list.getVisibleRowCount() - 1;
         moveRelative(pageSize * n);
